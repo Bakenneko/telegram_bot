@@ -24,23 +24,29 @@ public class VacanciesBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.getMessage() != null) {
-            handleStartCommand(update);
-        }
-        if (update.getCallbackQuery() != null){
-            String callbackData = update.getCallbackQuery().getData();
-            if ("showJuniorVacancies".equals(callbackData)){
-                showJuniorVacancies(update);
+            try {
+
+                if (update.getMessage() != null) {
+                    handleStartCommand(update);
+                 }
+                    if (update.getCallbackQuery() != null){
+                    String callbackData = update.getCallbackQuery().getData();
+                        if ("showJuniorVacancies".equals(callbackData)) {
+                            showJuniorVacancies(update);
+                        }
             }
-        }
+        } catch (Exception e){
+                throw new RuntimeException("Can't send message to user!", e);
+            }
     }
 
-    private void showJuniorVacancies(Update update) {
+    private void showJuniorVacancies(Update update) throws TelegramApiException {
 
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("Please choose vacancy:");
         sendMessage.setChatId(update.getCallbackQuery().getMessage().getChatId());
         sendMessage.setReplyMarkup(getJuniorVacanciesMenu());
+        execute(sendMessage);
 
     }
 
