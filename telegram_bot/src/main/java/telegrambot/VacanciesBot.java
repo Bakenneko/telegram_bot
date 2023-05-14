@@ -1,5 +1,5 @@
 package telegrambot;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -8,6 +8,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import telegrambot.dto.VacancyDto;
+import telegrambot.service.VacancyService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +17,8 @@ import java.util.List;
 @Component
 public class VacanciesBot extends TelegramLongPollingBot {
 
-        // 5795437222:AAGSYFXK0jCd7AUJH6WZd2hDlNw489TmLc0
-
+    @Autowired
+    private VacancyService vacancyService;
 
     public VacanciesBot() {
         super("5795437222:AAGSYFXK0jCd7AUJH6WZd2hDlNw489TmLc0");
@@ -51,7 +53,9 @@ public class VacanciesBot extends TelegramLongPollingBot {
         private void showVacancyDescription (String id, Update update) throws TelegramApiException {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(update.getCallbackQuery().getMessage().getChatId());
-            sendMessage.setText("Vacancy description for vacancy with id = " + id);
+            VacancyDto vacancy = vacancyService.get(id);
+            String description = vacancy.getShortDescription();
+            sendMessage.setText(description);
             execute(sendMessage);
         }
     private void showMiddleVacancies(Update update) throws TelegramApiException {
@@ -67,7 +71,7 @@ public class VacanciesBot extends TelegramLongPollingBot {
     private ReplyKeyboard getMiddleVacanciesMenu() {
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton maVacancy = new InlineKeyboardButton();
-        maVacancy.setText("Middle Java developer at MA");
+        maVacancy.setText("Middle Java dev at MA");
         maVacancy.setCallbackData("vacancyId=3");
         row.add(maVacancy);
 
@@ -94,7 +98,7 @@ public class VacanciesBot extends TelegramLongPollingBot {
     private ReplyKeyboard getSeniorVacanciesMenu() {
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton maVacancy = new InlineKeyboardButton();
-        maVacancy.setText("Senior Java developer at MA");
+        maVacancy.setText("Senior Java dev at MA");
         maVacancy.setCallbackData("vacancyId=5");
         row.add(maVacancy);
 
@@ -121,15 +125,14 @@ public class VacanciesBot extends TelegramLongPollingBot {
 
     private ReplyKeyboard getJuniorVacanciesMenu() {
         List<InlineKeyboardButton> row = new ArrayList<>();
-        InlineKeyboardButton maVacancy = new InlineKeyboardButton();
-        maVacancy.setText("Junior Java developer at MA");
-        maVacancy.setCallbackData("vacancyId=1");
-        row.add(maVacancy);
+        List<VacancyDto> vacancies = vacancyService.getJuniorVacancies();
 
-        InlineKeyboardButton googleVacancy = new InlineKeyboardButton();
-        googleVacancy.setText("Junior Dev at google");
-        googleVacancy.setCallbackData("vacancyId=2");
-        row.add(googleVacancy);
+        for(VacancyDto vacancy: vacancies){
+            InlineKeyboardButton vacancyButton = new InlineKeyboardButton();
+            vacancyButton.setText(vacancy.getTitle());
+            vacancyButton.setCallbackData("vacancyId=" + vacancy.getId());
+            row.add(vacancyButton);
+        }
 
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         keyboard.setKeyboard(List.of(row));
